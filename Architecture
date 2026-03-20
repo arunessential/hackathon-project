@@ -1,0 +1,7 @@
+Internet
+   ↓
+EC2 (t2.micro)
+ ├── NGINX (Frontend - React)
+ ├── Backend (Node.js API)
+ ├── Database (MySQL/Postgres container OR RDS)
+ └── Prometheus + Grafana
