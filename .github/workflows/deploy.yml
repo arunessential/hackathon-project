@@ -1,0 +1,24 @@
+name: Deploy App
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build images
+        run: |
+          docker build -t frontend ./frontend
+          docker build -t backend ./backend
+
+      - name: SSH Deploy
+        run: |
+          ssh ubuntu@EC2_IP "
+            docker-compose down
+            docker-compose up -d --build
+          "
