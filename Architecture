@@ -1,7 +1,7 @@
-Internet
-   ↓
-EC2 (t2.micro)
- ├── NGINX (Frontend - React)
- ├── Backend (Node.js API)
- ├── Database (MySQL/Postgres container OR RDS)
- └── Prometheus + Grafana
+User → Load Balancer → EC2 (ASG)
+                         ├── Docker (Frontend - React/NGINX)
+                         ├── Docker (Backend - Node.js API)
+                         ├── Docker (Prometheus)
+                         └── Docker (Grafana)
+                         ↓
+                      RDS (MySQL)
