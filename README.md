@@ -1,0 +1,82 @@
+CloudWatch Lite – Website Monitoring & Alert Platform
+🚀 Concept
+
+A SaaS platform that helps small businesses monitor their websites, APIs, and servers with:
+
+Uptime checks
+
+Performance metrics
+
+Alerts (email/SMS/Slack)
+
+Basic analytics dashboard
+
+👉 Think of it as a lightweight alternative to Datadog / Pingdom, but cheaper and simpler.
+
+🎯 Target Users
+
+Small startups
+
+Freelancers hosting websites
+
+E-commerce store owners
+
+DevOps beginners
+
+💻 Core Features
+1. 🌐 Uptime Monitoring
+
+Check if a website/API is up or down
+
+Ping every 30s / 1 min
+
+2. ⚡ Performance Metrics
+
+Response time tracking
+
+Status codes (200, 500, etc.)
+
+3. 🔔 Alerts & Notifications
+
+Email alerts
+
+Slack / webhook integration
+
+SMS (optional paid feature)
+
+4. 📊 Dashboard (Frontend)
+
+Real-time graphs
+
+Historical data
+
+Incident logs
+
+5. 🔐 User Authentication
+
+Login / Signup
+
+API key generation
+
+🏗️ Architecture (3-Tier – Perfect for your learning)
+🔹 Frontend
+
+React.js
+
+Hosted on S3 + CloudFront
+
+🔹 Backend
+
+Node.js / Express
+
+REST APIs
+
+Hosted on:
+
+EC2 OR
+
+Kubernetes (EKS 🔥)
+
+🔹 Database
+
+MySQL / PostgreSQL (RDS)
