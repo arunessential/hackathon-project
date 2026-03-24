@@ -3,62 +3,184 @@
 <head>
   <meta charset="UTF-8">
   <title>CloudWatch Lite</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <!-- Favicon -->
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/906/906175.png">
+
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: #0f172a;
-      color: white;
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0b1220;
+      color: #e5e7eb;
+    }
+
+    /* NAVBAR */
     header {
-      background: #1e293b;
-      padding: 20px;
-      text-align: center;
-      font-size: 24px;
+      background: #111827;
+      padding: 16px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1f2937;
     }
 
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo img {
+      width: 32px;
+      height: 32px;
+    }
+
+    .logo span {
+      font-size: 18px;
+      font-weight: 600;
+      color: #60a5fa;
+    }
+
+    .header-right {
+      font-size: 14px;
+      color: #9ca3af;
+    }
+
+    /* CONTAINER */
     .container {
-      padding: 20px;
+      padding: 30px;
+      max-width: 1200px;
+      margin: auto;
     }
 
-    .card {
-      background: #1e293b;
-      padding: 20px;
-      margin: 10px;
-      border-radius: 10px;
-      display: inline-block;
-      width: 30%;
+    /* INPUT */
+    .input-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
     }
 
-    button {
-      background: #3b82f6;
-      border: none;
-      padding: 10px;
+    .input-box input {
+      flex: 1;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid #1f2937;
+      background: #111827;
       color: white;
-      cursor: pointer;
+      outline: none;
     }
 
-    input {
-      padding: 10px;
-      width: 60%;
+    .input-box button {
+      padding: 14px 20px;
+      border-radius: 8px;
+      border: none;
+      background: #3b82f6;
+      color: white;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.2s;
     }
+
+    .input-box button:hover {
+      background: #2563eb;
+    }
+
+    /* GRID */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    /* CARD */
+    .card {
+      background: #111827;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #1f2937;
+      transition: 0.3s;
+      position: relative;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    }
+
+    .card h3 {
+      font-size: 15px;
+      margin-bottom: 10px;
+      color: #93c5fd;
+      word-break: break-all;
+    }
+
+    .status {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .status.up {
+      color: #22c55e;
+    }
+
+    .status.down {
+      color: #ef4444;
+    }
+
+    .status.warn {
+      color: #f59e0b;
+    }
+
+    .time {
+      font-size: 14px;
+      color: #9ca3af;
+    }
+
+    .badge {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: #1f2937;
+    }
+
   </style>
 </head>
 
 <body>
 
-<header>🚀 CloudWatch Lite Dashboard</header>
+<header>
+  <div class="logo">
+    <img src="https://cdn-icons-png.flaticon.com/512/906/906175.png" alt="logo">
+    <span>CloudWatch Lite</span>
+  </div>
+
+  <div class="header-right">
+    ⚡ Real-time Monitoring
+  </div>
+</header>
 
 <div class="container">
 
-  <h2>Add Website</h2>
-  <input type="text" id="url" placeholder="Enter URL">
-  <button onclick="addSite()">Monitor</button>
+  <!-- INPUT -->
+  <div class="input-box">
+    <input type="text" id="url" placeholder="Enter website (e.g. google.com)">
+    <button onclick="addSite()">Monitor</button>
+  </div>
 
-  <h2>Status</h2>
-  <div id="results"></div>
+  <!-- RESULTS -->
+  <div class="grid" id="results"></div>
 
 </div>
 
@@ -66,11 +188,11 @@
 async function addSite() {
   let url = document.getElementById("url").value;
 
-if (!url.startsWith("http")) {
-  url = "https://" + url;
-}
+  if (!url) return;
 
-  console.log("Clicked!", url);
+  if (!url.startsWith("http")) {
+    url = "https://" + url;
+  }
 
   try {
     const res = await fetch("http://127.0.0.1:3000/check", {
@@ -80,17 +202,31 @@ if (!url.startsWith("http")) {
     });
 
     const data = await res.json();
-    console.log("Response:", data);
+
+    let statusClass = "warn";
+    if (data.status === 200) statusClass = "up";
+    else if (data.status >= 500) statusClass = "down";
+
+    document.getElementById("results").innerHTML += `
+      <div class="card">
+        <div class="badge">${data.status}</div>
+        <h3>${url}</h3>
+        <p class="status ${statusClass}">
+          ${data.status === 200 ? "🟢 Healthy" : "🔴 Issue"}
+        </p>
+        <p class="time">Response Time: ${data.time} ms</p>
+      </div>
+    `;
+  } catch (err) {
+    console.error(err);
 
     document.getElementById("results").innerHTML += `
       <div class="card">
         <h3>${url}</h3>
-        <p>Status: ${data.status}</p>
-        <p>Time: ${data.time} ms</p>
+        <p class="status down">🔴 Failed</p>
+        <p class="time">Error connecting</p>
       </div>
     `;
-  } catch (err) {
-    console.error("Error:", err);
   }
 }
 </script>
