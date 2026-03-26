@@ -37,9 +37,10 @@ jobs:
             cd hackathon-project
             git pull origin main
 
-           docker compose -f Docker/docker-compose.yml down
-           docker compose -f Docker/docker-compose.yml up -d --build
-          EOF
+            /usr/bin/docker-compose -f Docker/docker-compose.yml down || true
+            /usr/bin/docker-compose -f Docker/docker-compose.yml up -d --build
+           EOF
+           
       
 
 
