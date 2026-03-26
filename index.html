@@ -1,8 +1,18 @@
 <!DOCTYPE html>
+<script>
+const token = localStorage.getItem("token");
+
+if (!token) {
+  window.location.href = "login.html";
+}
+</script>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>CloudWatch Lite</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
@@ -181,6 +191,17 @@
 
   <!-- RESULTS -->
   <div class="grid" id="results"></div>
+  <h2 style="margin-top:40px;">📊 Analytics Dashboard</h2>
+
+<select id="timeRange" onchange="loadAnalytics()">
+  <option value="1">Last 1 Hour</option>
+  <option value="5">Last 5 Hours</option>
+  <option value="24">Last 24 Hours</option>
+</select>
+
+<div id="uptimeCards"></div>
+
+<canvas id="lineChart" height="100"></canvas>
 
 </div>
 
@@ -194,41 +215,130 @@ async function addSite() {
     url = "https://" + url;
   }
 
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    alert("Please login first");
+    return;
+  }
+
   try {
-    const res = await fetch("http://127.0.0.1:3000/check", {
+    const res = await fetch("http://localhost:3000/add", {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": token
+      },
       body: JSON.stringify({ url })
     });
 
     const data = await res.json();
 
-    let statusClass = "warn";
-    if (data.status === 200) statusClass = "up";
-    else if (data.status >= 500) statusClass = "down";
+    alert("✅ Website added successfully");
 
-    document.getElementById("results").innerHTML += `
-      <div class="card">
-        <div class="badge">${data.status}</div>
-        <h3>${url}</h3>
-        <p class="status ${statusClass}">
-          ${data.status === 200 ? "🟢 Healthy" : "🔴 Issue"}
-        </p>
-        <p class="time">Response Time: ${data.time} ms</p>
-      </div>
-    `;
   } catch (err) {
     console.error(err);
-
-    document.getElementById("results").innerHTML += `
-      <div class="card">
-        <h3>${url}</h3>
-        <p class="status down">🔴 Failed</p>
-        <p class="time">Error connecting</p>
-      </div>
-    `;
+    alert("❌ Failed to add website");
   }
 }
+
+async function loadLogs() {
+  try {
+    const res = await fetch("http://localhost:3000/logs");
+    const data = await res.json();
+
+    document.getElementById("results").innerHTML = data.map(d => `
+      <div class="card">
+        <div class="badge">${d.status}</div>
+        <h3>${d.url}</h3>
+        <p class="status ${d.status == 200 ? "up" : "down"}">
+          ${d.status == 200 ? "🟢 Healthy" : "🔴 Failed"}
+        </p>
+        <p class="time">Response Time: ${d.response_time} ms</p>
+      </div>
+    `).join("");
+
+  } catch (err) {
+    console.error("Error loading logs:", err);
+  }
+}
+
+function renderUptime(data) {
+  document.getElementById("uptimeCards").innerHTML = data.map(d => `
+    <div style="background:#111827; padding:15px; margin:10px; border-radius:10px;">
+      <h3>${d.url}</h3>
+      <p>Uptime: <b>${d.uptime}%</b></p>
+      <p>Total Checks: ${d.total_checks}</p>
+    </div>
+  `).join("");
+}
+
+let lineChart;
+
+async function loadTimeseries() {
+  const hours = document.getElementById("timeRange").value;
+
+  const res = await fetch(`http://localhost:3000/timeseries/${hours}`);
+  const data = await res.json();
+
+  const grouped = {};
+
+  data.forEach(d => {
+    if (!grouped[d.url]) grouped[d.url] = [];
+
+    grouped[d.url].push({
+      x: new Date(d.timestamp),
+      y: d.response_time
+    });
+  });
+
+  const datasets = Object.keys(grouped).map(url => ({
+    label: url,
+    data: grouped[url],
+    fill: false,
+    tension: 0.3
+  }));
+
+  if (lineChart) lineChart.destroy();
+
+  lineChart = new Chart(document.getElementById("lineChart"), {
+    type: "line",
+    data: { datasets },
+    options: {
+      parsing: false,
+      scales: {
+        x: {
+          type: "time",
+          time: {
+            unit: "minute"
+          }
+        }
+      }
+    }
+  });
+}
+
+async function loadAnalytics() {
+  const hours = document.getElementById("timeRange").value;
+
+  try {
+    const res = await fetch(`http://localhost:3000/analytics/${hours}`);
+    const data = await res.json();
+
+    renderUptime(data);   // ✅ uptime cards
+    loadTimeseries();     // ✅ graph
+
+  } catch (err) {
+    console.error("Analytics error:", err);
+  }
+}
+
+// auto refresh every 5 sec
+setInterval(loadLogs, 5000);
+
+// load immediately
+loadLogs();
+loadAnalytics();
 </script>
 
 </body>

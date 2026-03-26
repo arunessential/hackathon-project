@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Reset Password</h2>
+
+<input id="password" type="password" placeholder="New Password">
+<button onclick="reset()">Reset</button>
+
+<script>
+const token = new URLSearchParams(window.location.search).get("token");
+
+async function reset() {
+  const newPassword = document.getElementById("password").value;
+
+  await fetch("http://localhost:3000/reset-password", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ token, newPassword })
+  });
+
+  alert("Password reset successful!");
+}
+</script>
+
+</body>
+</html>
