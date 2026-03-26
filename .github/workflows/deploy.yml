@@ -13,8 +13,11 @@ jobs:
 
       - name: Build images
         run: |
-          docker build -t frontend ./frontend
-          docker build -t backend ./backend
+          echo "Project strucutre:"
+          ls -R
+          
+          docker build -t frontend -f Docker/Dockerfile.frontend .
+          docker build -t backend -f Docker/Dockerfile.backend .
 
       - name: SSH Deploy
         run: |
