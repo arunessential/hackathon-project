@@ -26,14 +26,21 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
+      
       - name: SSH Deploy
         run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} 
-          cd ~/your-project-folder &&
-          docker-compose down &&
-          docker-compose up -d --build
-        
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            if [ ! -d "hackathon-project" ]; then
+              git clone https://github.com/arunessential/hackathon-project.git
+            fi
 
+            cd hackathon-project
+            git pull origin main
+
+           docker-compose -f Docker/docker-compose.yml down
+           docker-compose -f Docker/docker-compose.yml up -d --build
+          EOF
+      
 
 
         
