@@ -1,3 +1,8 @@
+
+      
+
+
+        
 name: Deploy App
 
 on:
@@ -9,11 +14,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-      - name: Build images
+      - name: Build Docker Images (CI check)
         run: |
-          echo "Project strucutre:"
+          echo "Project structure:"
           ls -R
           
           docker build -t frontend -f Docker/Dockerfile.frontend .
@@ -26,22 +32,31 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      
-      - name: SSH Deploy
+      - name: Deploy to EC2
         run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+
+            echo "🚀 Starting Deployment..."
+
+            # Clone if not exists
             if [ ! -d "hackathon-project" ]; then
               git clone https://github.com/arunessential/hackathon-project.git
             fi
 
             cd hackathon-project
+
+            # Pull latest code
             git pull origin main
 
-            /usr/bin/docker-compose -f Docker/docker-compose.yml down || true
-            /usr/bin/docker-compose -f Docker/docker-compose.yml up -d --build
-           EOF
-           
-      
+            # Ensure Docker is running
+            sudo systemctl start docker
 
+            # Stop existing containers
+            docker compose -f Docker/docker-compose.yml down || true
 
-        
+            # Build & start containers
+            docker compose -f Docker/docker-compose.yml up -d --build
+
+            echo "✅ Deployment Complete"
+
+          EOF
