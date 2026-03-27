@@ -2,14 +2,18 @@ version: "3"
 
 services:
   frontend:
-    build: ./frontend
+    build:
+      context: ..
+      dockerfile: Docker/Dockerfile.frontend
     ports:
-      - "80:80"
+      - "8081:80"
 
   backend:
-    build: ./backend
+    build:
+      context: ..
+      dockerfile: Docker/Dockerfile.backend
     ports:
-      - "3000:3000"
+      - "5000:3000"
 
   prometheus:
     image: prom/prometheus

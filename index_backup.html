@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<script>
+const token = localStorage.getItem("token");
+
+if (!token) {
+  window.location.href = "login.html";
+}
+</script>
+<script>
+async function loadDashboard() {
+  const res = await fetch("http://3.236.191.132:5000/status");
+  const data = await res.json();
+
+  const container = document.getElementById("websitesContainer");
+  container.innerHTML = "";
+
+  data.forEach(site => {
+    let statusText = "DOWN";
+    let color = "red";
+
+    if (site.status == 200) {
+      statusText = "Healthy";
+      color = "green";
+    } else if (site.status === "DNS_FAIL") {
+      statusText = "DNS Error";
+      color = "orange";
+    }
+
+    container.innerHTML += `
+      <div class="card">
+        <h3>${site.url}</h3>
+        <p style="color:${color}">${statusText}</p>
+        <p>Response Time: ${site.response_time} ms</p>
+      </div>
+    `;
+  });
+}
+
+// auto refresh every 5 sec
+setInterval(loadDashboard, 5000);
+
+// load on start
+window.onload = loadDashboard;
+</script>
+
+<html lang="en">
+<div id="websitesContainer"></div>
+<head>
+  <meta charset="UTF-8">
+  <title>CloudWatch Lite</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <!-- Favicon -->
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/906/906175.png">
+  <style>
+.card {
+  background: #111;
+  color: white;
+  padding: 15px;
+  margin: 10px;
+  border-radius: 10px;
+  width: 250px;
+  display: inline-block;
+}
+</style>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0b1220;
+      color: #e5e7eb;
+    }
+
+    /* NAVBAR */
+    header {
+      background: #111827;
+      padding: 16px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1f2937;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo img {
+      width: 32px;
+      height: 32px;
+    }
+
+    .logo span {
+      font-size: 18px;
+      font-weight: 600;
+      color: #60a5fa;
+    }
+
+    .header-right {
+      font-size: 14px;
+      color: #9ca3af;
+    }
+
+    /* CONTAINER */
+    .container {
+      padding: 30px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    /* INPUT */
+    .input-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+
+    .input-box input {
+      flex: 1;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid #1f2937;
+      background: #111827;
+      color: white;
+      outline: none;
+    }
+
+    .input-box button {
+      padding: 14px 20px;
+      border-radius: 8px;
+      border: none;
+      background: #3b82f6;
+      color: white;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .input-box button:hover {
+      background: #2563eb;
+    }
+
+    /* GRID */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    /* CARD */
+    .card {
+      background: #111827;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #1f2937;
+      transition: 0.3s;
+      position: relative;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    }
+
+    .card h3 {
+      font-size: 15px;
+      margin-bottom: 10px;
+      color: #93c5fd;
+      word-break: break-all;
+    }
+
+    .status {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .status.up {
+      color: #22c55e;
+    }
+
+    .status.down {
+      color: #ef4444;
+    }
+
+    .status.warn {
+      color: #f59e0b;
+    }
+
+    .time {
+      font-size: 14px;
+      color: #9ca3af;
+    }
+
+    .badge {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: #1f2937;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">
+    <img src="https://cdn-icons-png.flaticon.com/512/906/906175.png" alt="logo">
+    <span>CloudWatch Lite</span>
+  </div>
+
+  <div class="header-right">
+    ⚡ Real-time Monitoring
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- INPUT -->
+  <div class="input-box">
+    <input type="text" id="url" placeholder="Enter website (e.g. google.com)">
+    <button onclick="addSite()">Monitor</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="grid" id="results"></div>
+  <h2 style="margin-top:40px;">📊 Analytics Dashboard</h2>
+
+<select id="timeRange" onchange="loadAnalytics()">
+  <option value="1">Last 1 Hour</option>
+  <option value="5">Last 5 Hours</option>
+  <option value="24">Last 24 Hours</option>
+</select>
+
+<div id="uptimeCards"></div>
+
+<canvas id="lineChart" height="100"></canvas>
+
+</div>
+
+<script>
+async function addSite() {
+  let url = document.getElementById("url").value;
+
+  if (!url) return;
+
+  if (!url.startsWith("http")) {
+    url = "https://" + url;
+  }
+
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    alert("Please login first");
+    return;
+  }
+
+  try {
+    const res = await fetch("http://localhost:3000/add", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": token
+      },
+      body: JSON.stringify({ url })
+    });
+
+    const data = await res.json();
+
+    alert("✅ Website added successfully");
+
+  } catch (err) {
+    console.error(err);
+    alert("❌ Failed to add website");
+  }
+}
+
+async function loadLogs() {
+  try {
+    const res = await fetch("http://localhost:3000/logs");
+    const data = await res.json();
+
+    document.getElementById("results").innerHTML = data.map(d => `
+      <div class="card">
+        <div class="badge">${d.status}</div>
+        <h3>${d.url}</h3>
+        <p class="status ${d.status == 200 ? "up" : "down"}">
+          ${d.status == 200 ? "🟢 Healthy" : "🔴 Failed"}
+        </p>
+        <p class="time">Response Time: ${d.response_time} ms</p>
+      </div>
+    `).join("");
+
+  } catch (err) {
+    console.error("Error loading logs:", err);
+  }
+}
+
+function renderUptime(data) {
+  document.getElementById("uptimeCards").innerHTML = data.map(d => `
+    <div style="background:#111827; padding:15px; margin:10px; border-radius:10px;">
+      <h3>${d.url}</h3>
+      <p>Uptime: <b>${d.uptime}%</b></p>
+      <p>Total Checks: ${d.total_checks}</p>
+    </div>
+  `).join("");
+}
+
+let lineChart;
+
+async function loadTimeseries() {
+  const hours = document.getElementById("timeRange").value;
+
+  const res = await fetch(`http://localhost:3000/timeseries/${hours}`);
+  const data = await res.json();
+
+  const grouped = {};
+
+  data.forEach(d => {
+    if (!grouped[d.url]) grouped[d.url] = [];
+
+    grouped[d.url].push({
+      x: new Date(d.timestamp),
+      y: d.response_time
+    });
+  });
+
+  const datasets = Object.keys(grouped).map(url => ({
+    label: url,
+    data: grouped[url],
+    fill: false,
+    tension: 0.3
+  }));
+
+  if (lineChart) lineChart.destroy();
+
+  lineChart = new Chart(document.getElementById("lineChart"), {
+    type: "line",
+    data: { datasets },
+    options: {
+      parsing: false,
+      scales: {
+        x: {
+          type: "time",
+          time: {
+            unit: "minute"
+          }
+        }
+      }
+    }
+  });
+}
+
+async function loadAnalytics() {
+  const hours = document.getElementById("timeRange").value;
+
+  try {
+    const res = await fetch(`http://localhost:3000/analytics/${hours}`);
+    const data = await res.json();
+
+    renderUptime(data);   // ✅ uptime cards
+    loadTimeseries();     // ✅ graph
+
+  } catch (err) {
+    console.error("Analytics error:", err);
+  }
+}
+
+// auto refresh every 5 sec
+setInterval(loadLogs, 5000);
+
+// load immediately
+loadLogs();
+loadAnalytics();
+</script>
+
+</body>
+</html>
